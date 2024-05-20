@@ -8,7 +8,7 @@
 int motor1Pin1 = 16; 
 int motor1Pin2 = 17; 
 int enable1Pin = 4; 
-//Motor B-
+//Motor B
 int motor2Pin1 = 18; 
 int motor2Pin2 = 5; 
 int enable2Pin = 19;
@@ -16,11 +16,12 @@ int enable2Pin = 19;
 
 // Setting PWM properties
 const int freq = 30000;
-const int pwmChannel = 0;
+const int pwmChannel1 = 0;
+const int pwmChannel2 = 0;
 const int resolution = 8;
-int dutyCycle = 200;
-char mov ='l'; 
-
+int dutyCycle = 255;
+float factor1=1.0;
+float factor2=0.85;
 
 void setup() {
   //conectar con el control
@@ -35,70 +36,88 @@ void setup() {
   pinMode(motor2Pin2, OUTPUT);
   pinMode(enable2Pin, OUTPUT);
 
-  /*
   // configure LED PWM functionalitites
-  ledcSetup(pwmChannel, freq, resolution);
-  
+  ledcSetup(pwmChannel1, freq, resolution);
+  ledcSetup(pwmChannel2, freq, resolution);
+
   // attach the channel to the GPIO to be controlled
-  ledcAttachPin(enable1Pin, pwmChannel);
-  ledcAttachPin(enable2Pin, pwmChannel);
-  */
+  ledcAttachPin(enable1Pin, pwmChannel1);
+  ledcAttachPin(enable2Pin, pwmChannel2);
+  
   Serial.begin(115200);
 
   // testing
-  Serial.print("Testing DC Motor...");
+  Serial.print("Fin del setup");
 }
 
 void loop() {
   if(PS4.isConnected()){
     Serial.println("control");
   // Move the DC motor forward at maximum speed
-    if(PS4.Up()){
-      digitalWrite(enable1Pin, HIGH);
-      digitalWrite(enable2Pin, HIGH);
-      //Serial.println("Moving Forward");
-      digitalWrite(motor1Pin1, LOW);
-      digitalWrite(motor1Pin2, HIGH);
-      
-      digitalWrite(motor2Pin1, LOW);
-      digitalWrite(motor2Pin2, HIGH);
-    }
-    else if(PS4.Down()){
-      digitalWrite(enable1Pin, HIGH);
-      digitalWrite(enable2Pin, HIGH);
-      //Serial.println("Moving Backwards");
-      digitalWrite(motor1Pin1, HIGH);
-      digitalWrite(motor1Pin2, LOW);
-      
-      digitalWrite(motor2Pin1, HIGH);
-      digitalWrite(motor2Pin2, LOW);
-    }
-    else if(PS4.Right()){
-      digitalWrite(enable1Pin, HIGH);
-      digitalWrite(enable2Pin, HIGH);
-      //Serial.println("Turning Right");
-      digitalWrite(motor2Pin1, HIGH);
-      digitalWrite(motor2Pin2, LOW);
-      
-      digitalWrite(motor1Pin1, LOW);
-      digitalWrite(motor1Pin2, HIGH);
-    }
-    else if(PS4.Left()){
-      digitalWrite(enable1Pin, HIGH);
-      digitalWrite(enable2Pin, HIGH);
-      //Serial.println("Turning Left");
-      digitalWrite(motor2Pin1, LOW);
-      digitalWrite(motor2Pin2, HIGH);
-      
-      digitalWrite(motor1Pin1, HIGH);
-      digitalWrite(motor1Pin2, LOW);
-    }
-    else {
-      digitalWrite(enable1Pin, LOW);
-      digitalWrite(enable2Pin, LOW);
-    }
+    if     (PS4.Up())     { forward(dutyCycle);  }
+    else if(PS4.Down())   { backward(dutyCycle); }
+    else if(PS4.Right())  { right(dutyCycle,dutyCycle-20);    }
+    else if(PS4.Left())   { left(dutyCycle-20,dutyCycle);     }
+    else                  { stop();     }
   }
-  delay(100);
+  delay(10);
+}
+
+// funciones de direcciones
+void forward(int pwm){
+  ledcWrite(pwmChannel1,int(pwm*factor1));
+  ledcWrite(pwmChannel2,int(pwm*factor2));
+  //digitalWrite(enable1Pin, HIGH);
+  //digitalWrite(enable2Pin, HIGH);
+  //Serial.println("Moving Forward");
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, HIGH);
+      
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, HIGH);
+}
+
+void backward(int pwm){
+  ledcWrite(pwmChannel1,int(pwm*factor1));
+  ledcWrite(pwmChannel2,int(pwm*factor2));
+  //digitalWrite(enable1Pin, HIGH);
+  //digitalWrite(enable2Pin, HIGH);
+  //Serial.println("Moving Forward");
+  digitalWrite(motor1Pin1, HIGH);
+  digitalWrite(motor1Pin2, LOW);
+      
+  digitalWrite(motor2Pin1, HIGH);
+  digitalWrite(motor2Pin2, LOW);
+}
+
+void right(int pwm1, int pwm2){
+  ledcWrite(pwmChannel1,int(pwm1*factor1));
+  ledcWrite(pwmChannel2,int(pwm2*factor2));
+  digitalWrite(motor2Pin1, HIGH);
+  digitalWrite(motor2Pin2, LOW);
+  //motor1 izquierdo
+  //el motor 1 sigue hacia adelante    
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, HIGH);
+}
+
+void left(int pwm1, int pwm2){
+  ledcWrite(pwmChannel1,int(pwm1*factor1));
+  ledcWrite(pwmChannel1,int(pwm2*factor2));
+  //el motor 2 sigue hacia adelante
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, HIGH);
+      
+  digitalWrite(motor1Pin1, HIGH);
+  digitalWrite(motor1Pin2, LOW);
+}
+
+void stop(){
+  ledcWrite(pwmChannel1,0);
+  ledcWrite(pwmChannel1,0);
+  //digitalWrite(enable1Pin, LOW);
+  //digitalWrite(enable2Pin, LOW);
+}
   /*
   // Move DC motor forward with increasing speed
   digitalWrite(motor1Pin1, HIGH);
@@ -111,4 +130,3 @@ void loop() {
     delay(500);
   }
   dutyCycle = 200;*/
-  }
